@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}产品列表 - 仓库管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-boxes"></i> 产品列表</h2>
+    {% if can_add %}
+        <a href="{% url 'product_create' %}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> 添加新产品
+        </a>
+    {% endif %}
+</div>
+
+{% if can_search %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-search"></i> 搜索产品</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                {{ search_form.name.label_tag }}
+                {{ search_form.name }}
+            </div>
+            <div class="col-md-3">
+                {{ search_form.category.label_tag }}
+                {{ search_form.category }}
+            </div>
+            <div class="col-md-3">
+                {{ search_form.min_quantity.label_tag }}
+                {{ search_form.min_quantity }}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>产品名称</th>
+                        <th>类别</th>
+                        <th>库存数量</th>
+                        <th>单价</th>
+                        <th>存放位置</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ product.id }}</span></td>
+                        <td>{{ product.name }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if product.category == 'electronics' %}bg-info
+                                {% elif product.category == 'clothing' %}bg-warning
+                                {% elif product.category == 'food' %}bg-danger
+                                {% elif product.category == 'tools' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ product.get_category_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if product.quantity < 10 %}
+                                <span class="badge bg-danger">{{ product.quantity }} <i class="bi bi-exclamation-triangle"></i></span>
+                            {% elif product.quantity < 50 %}
+                                <span class="badge bg-warning">{{ product.quantity }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ product.quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td>¥{{ product.price }}</td>
+                        <td>{{ product.location }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline-info">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                                {% if perms.warehouse.can_change_product %}
+                                <a href="{% url 'product_update' product.pk %}" class="btn btn-outline-warning">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </a>
+                                {% endif %}
+                                {% if perms.warehouse.can_delete_product %}
+                                <a href="{% url 'product_delete' product.pk %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash"></i> 删除
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="bi bi-inbox display-6 text-muted"></i>
+                            <p class="mt-2 text-muted">暂无产品数据</p>
+                            {% if can_add %}
+                            <a href="{% url 'product_create' %}" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-lg"></i> 添加第一个产品
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if products.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if products.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}">上一页</a>
+            </li>
+        {% endif %}
+        
+        {% for num in products.paginator.page_range %}
+            {% if products.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if products.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}">下一页</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
